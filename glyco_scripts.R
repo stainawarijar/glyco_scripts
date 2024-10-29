@@ -79,6 +79,7 @@ facetted_boxplots <- function(data_long,
     border(size = 0.5) +
     theme(
       legend.position = "bottom",
+	  legend.key = element_rect(colour = NA)
     ) +
     guides(color = guide_legend(override.aes = list(size = 3)))
   # Return the plot

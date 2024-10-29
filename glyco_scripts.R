@@ -159,3 +159,37 @@ annotation_yscales <- function(annotation_df, variable_column = "variable", ysca
 
 
 
+
+
+# Increase y-axis space of a facetted ggplot, for use with stat_cor() annotation
+increase_y_limits <- function(faceted_plot,
+                              facet_variable,
+                              increase_by) {
+  
+  facet_layout <- ggplot_build(faceted_plot)$layout$layout
+  
+  limits <- facet_layout %>%
+    pmap(.,
+         function(ROW, COL, ...) {
+           limits <- tibble(
+             max_y = max(layer_scales(faceted_plot, i = ROW, j = COL)$y$get_limits()),
+             min_y = min(layer_scales(faceted_plot, i = ROW, j = COL)$y$get_limits()),
+             range = max_y - min_y
+           )
+         }) %>% 
+    reduce(., full_join) %>%
+    mutate(new_max_y = max_y + increase_by * range,
+           facet = facet_layout[[facet_variable]])
+  
+  join_by <- "facet"
+  names(join_by) <- facet_variable
+  
+  for_geom_blank <- full_join(faceted_plot$data,
+                              limits,
+                              by = join_by)
+  
+  plot_with_new_limits <- faceted_plot +
+    geom_blank(data = for_geom_blank,
+               aes(y = new_max_y))
+  return(plot_with_new_limits)
+}
